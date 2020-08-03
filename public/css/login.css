@@ -77,6 +77,11 @@
     width: 100%;
     
 }
+
+  
+
+
+
 textarea:focus, 
 textarea.form-control:focus, 
 input.form-control:focus, 
@@ -91,4 +96,14 @@ input[type=number]:focus,
 [contenteditable].form-control:focus {
   box-shadow: inset 0 -1px 0 #ddd;
   background: #ddd;
+}
+
+/*--------------------------------------------------------------------------------*/
+
+.dashboard{
+    border: 2px solid red;
+    padding: 30px 30px;
+}
+.schema{
+    border: solid 2px green;
 }
