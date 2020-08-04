@@ -1,23 +1,42 @@
 @extends('layouts.app')
 
+@include('layouts.header')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Dashboard') }}</div>
+<div class="container-fluid">
+    <div class="row">
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+        <div class="col-md-3 dashboard">
 
-                    {{ __('You are logged in!') }}
-                </div>
+            <div class="row d-flex justify-content-center">
+
+                
+                    <div class="form-group col-md-6">
+                    <select class="custom-select form-control ">
+                        <option selected>Open this select menu</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                    </select>
+                    </div>
+
+                    <div class="form-group col-md-6 ">
+                    <select class="custom-select form-control">
+                        <option selected>Open this select menu</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                    </select>
+                    </div>
+                
+
             </div>
         </div>
+
+
+        <div class=" col-md-9 schema">
+            schema
+        </div>
     </div>
+
 </div>
 @endsection
