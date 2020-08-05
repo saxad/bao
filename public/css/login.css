@@ -104,6 +104,34 @@ input[type=number]:focus,
     border: 2px solid red;
     padding: 30px 30px;
 }
+
+.dashboard .scrollabale{
+    height: 200px;
+    overflow-y: scroll;
+}
+table .ge {
+    position: relative;
+  }
+  
+  table .ge input {
+    position: absolute;
+  }
+  .poste-coupe table,
+.poste-coupe thead,
+.poste-coupe tr,
+.poste-coupe tbody,
+.poste-coupe th,
+.poste-coupe td {
+  text-align: center;
+}
+
+.poste-coupe .table td {
+  text-align: center;
+}
+/*--------------------------*/
+
 .schema{
     border: solid 2px green;
 }
+
+/*----------------------------*/
