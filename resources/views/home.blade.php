@@ -9,24 +9,22 @@
 
             <div class="row d-flex justify-content-center">
 
-
                 <div class="form-group col-md-6">
-                    <select class="custom-select form-control ">
-                        <option selected>Open this select menu</option>
-                        <option value="1">One</option>
-                        <option value="2">Two</option>
-                        <option value="3">Three</option>
+                    <select class="custom-select form-control post-option">
+                        <option selected>Poste source</option>
+                        @foreach($postes as $poste)
+                        <option value="{{ $poste }}">{{ $poste }}</option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div class="form-group col-md-6 ">
-                    <select class="custom-select form-control">
-                        <option selected>Open this select menu</option>
-                        <option value="1">One</option>
-                        <option value="2">Two</option>
-                        <option value="3">Three</option>
+                    <select class="custom-select form-control departure-option">
+                        <option selected>Depart</option>
+
                     </select>
                 </div>
+
 
 
             </div>
@@ -211,4 +209,42 @@
     </div>
 
 </div>
+@endsection
+
+@section('scripts')
+
+<script src="js/home/dashboard.js" defer></script>
+
+<script>
+    $('.post-option').on('change', function() {
+
+        let poste = $(this).find("option:selected").val();
+
+        function addOption(item, index) {
+            let departureOption;
+            departureOption = '<option value=' + item.gdo + '>' + item.name + '</option>';
+            $('.departure-option').append(departureOption)
+        }
+
+        $.ajax({
+            headers: {
+                'X-CSRF-Token': '{{ csrf_token() }}',
+            },
+            type: 'POST',
+            url: '{{ route("showdepartures") }}',
+            data: {
+                "poste": poste
+            },
+
+            success: function(response) {
+
+                let departures = JSON.parse(response)
+                $('.departure-option').empty();
+                $('.departure-option').append('<option selected>Depart</option>');
+                departures.forEach(addOption);
+
+            }
+        });
+    })
+</script>
 @endsection

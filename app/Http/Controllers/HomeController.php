@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Schema\Post;
 
 class HomeController extends Controller
 {
@@ -23,6 +24,19 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        $postes = Post::getPosts();
+        return view('home',compact('postes'));
+    }
+
+    public function showPosts(){
+
+        return json_encode(Post::getPosts());
+    }
+
+    public function showDepartures(Request $request)
+    {
+        
+        $poste = $request->poste;
+        return Post::getDepartue($poste);
     }
 }

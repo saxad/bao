@@ -43,6 +43,11 @@ return [
 
     'disks' => [
 
+        'geocutil' => [
+            'driver' => 'local',
+            'root' => storage_path('app/geocutil'),
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app'),
