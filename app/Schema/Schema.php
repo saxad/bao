@@ -11,11 +11,10 @@ use App\GeocutilRecording;
 class Schema
 {
 
+    public $debug = 0;
     /**
      * return geocutil file stream
      */
-
-
     private function getGeocutilfile()
     {
 
@@ -33,10 +32,6 @@ class Schema
      * get time of last updated  of geocutil file
      * and jdd : number of data set
      */
-
-
-
-
     public  function getGeocutilMetadata()
     {
 
@@ -65,7 +60,7 @@ class Schema
     }
 
 
-    private function insertComponent($sessionId, $componentNumber, $sitrCode, $parent, $child, $type, $typeInter, $typePost, $typeTroncon, $name, $state, $gdoCode, $departure, $posteSecours ,$departSecours, $clientNumber, $childNumber, $power)
+    private function insertComponent($sessionId, $componentNumber, $sitrCode, $parent, $child, $type, $typeInter, $typePost, $name, $state, $gdoCode, $gdoDeparture, $posteSecours, $departSecours, $gdoDepartSecours, $clientNumber, $childNumber, $power, $typeTroncon)
     {
         $component = new GeocutilRecording();
         $component->sessionid = $sessionId;
@@ -80,10 +75,10 @@ class Schema
         $component->nom = $name;
         $component->etat = $state;
         $component->code_gdo = $gdoCode;
-        $component->depart = $departure;
+        $component->depart = $gdoDeparture;
         $component->poste_secours = $posteSecours;
         $component->depart_secours = $departSecours;
-        $component->code_gdo_depart_secours = $departSecours;
+        $component->code_gdo_depart_secours = $gdoDepartSecours;
         $component->clients_number = $clientNumber;
         $component->child_number = $childNumber;
         $component->puissance = $power;
@@ -95,9 +90,9 @@ class Schema
     {
 
         if (in_array($post, $posteArray)) {
-            return array('amon' => $post, 'aval' => $inter);
+            return array('amont' => $post, 'aval' => $inter);
         } else {
-            return array('amon' => $inter, 'aval' => $post);
+            return array('amont' => $inter, 'aval' => $post);
         }
     }
     private function getPosteType($privedOrpublic, $posteType)
@@ -150,17 +145,10 @@ class Schema
         }
     }
 
-    /**
-     * temporaryStoreSchemaData
-     *
-     * @param  mixed $departureGdo
-     * @param  mixed $departureName
-     * @param  mixed $postName
-     * @return void
-     */
     public function temporaryStoreSchemaData($departureGdo, $departureName, $postName)
     {
 
+        $noeudjCodeGdoArray = [];
         $interCodeGdoArray = [];
         $postesBT = [];
         $interputeurFictifArray = [];
@@ -195,91 +183,111 @@ class Schema
                     $departureMeta['postName']      = $fileLineExploded[4];
                     $departureMeta['centre'] = $fileLineExploded[8];
 
-                    $this->insertComponent(1, $componentNumber, $fileLineExploded[1], 'null', 'null', 'depart', 'null', 'null', $fileLineExploded[3], 'F', $fileLineExploded[2], $fileLineExploded[3], 'null', 'null', 'null', 'null1', '0', '0', 'null');
+                    $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'depart', null, null, $fileLineExploded[3], 'F', $fileLineExploded[2], $fileLineExploded[2], null, null, null, 0, 0, 0, null);
                     $componentNumber++;
                     $departureNotFound = false;
-                } else {
+                }
+            } else {
 
-                    if (
-                        $fileLineExploded[0] == "DEPART" &&
-                        ($fileLineExploded[2] != $departureGdo || $fileLineExploded[3] != $departureName)
-                    ) {
+                if (
+                    $fileLineExploded[0] == "DEPART" &&
+                    ($fileLineExploded[2] != $departureGdo || $fileLineExploded[3] != $departureName)
+                ) {
 
-                        break;
-                    } elseif ($fileLineExploded[0] == "COU_J" && ($fileLineExploded[5] != 0 || $fileLineExploded[6] != 0)) {
+                    break;
+                } elseif ($fileLineExploded[0] == "COU_J" && ($fileLineExploded[5] != 0 || $fileLineExploded[6] != 0)) {
 
-                        $state = ($fileLineExploded[18] == 0) ? 'F' : 'O';
+                    $state = ($fileLineExploded[18] == 0) ? 'F' : 'O';
 
-                        if ($fileLineExploded[3 == 'NULL']) {
+                    if ($fileLineExploded[3 == 'NULL']) {
 
-                            $wait = (!in_array($fileLineExploded[4][2], $postesBT) && $state == 'O' && $fileLineExploded[19] == 'NULL');
-                            $positionInterPoste = $this->positionInterPoste($fileLineExploded[2], $fileLineExploded[1], $postesBT);
-                        } else {
-                            $positionInterPoste = $this->positionInterPoste($fileLineExploded[3], $fileLineExploded[2], $postesBT);
+                        $wait = (!in_array($fileLineExploded[2], $postesBT) && $state == 'O' && $fileLineExploded[19] == 'NULL');
+                        $positionInterPoste = $this->positionInterPoste($fileLineExploded[2], $fileLineExploded[1], $postesBT);
+                    } else {
+                        $positionInterPoste = $this->positionInterPoste($fileLineExploded[3], $fileLineExploded[2], $postesBT);
+                    }
+
+                    if (($state == 'O' && !in_array($fileLineExploded[4], $interCodeGdoArray) || $state == 'F') && !$wait) {
+                        if ($state == 'O') {
+                            $interCodeGdoArray[] = $fileLineExploded[4];
                         }
 
-                        if (($state == 'O' && !in_array($fileLineExploded[4], $interCodeGdoArray) || $state == 'F') && !$wait) {
-                            if ($state == 'O') {
-                                $interCodeGdoArray[] = $fileLineExploded[4];
-                            }
+                        $posteSecours = "";
+                        $departSecours = "";
+                        $gdoSecours = "";
+                        if ($fileLineExploded[19] != 'NULL') {
 
-                            if ($fileLineExploded[19] != 'NULL') {
-                                $posteSecours = "";
-                                $departSecours = "";
-                                $gdoSecours = "";
-                                if ($fileLineExploded[19] == $departureMeta['departureSitrCode']) {
+                            if ($fileLineExploded[19] == $departureMeta['departureSitrCode']) {
 
-                                    $posteSecours = $departureMeta['postName'];
-                                    $departSecours = $departureMeta['departureName'];
-                                    $gdoSecours = $departureMeta['departureGdoCode'];
-                                } else {
-                                    //chercher dans le fichier 
-                                }
-                            }
-                        }
-                    } elseif ($fileLineExploded[0] == "NOEUD_J" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
-                        if (!$fileLineExploded[2]) {
-                            if (!array_key_exists($fileLineExploded[1], $interputeurFictifArray)) {
-
-                                $interputeurFictifNumber++;
-                                $interputeurFictifArray[$fileLineExploded[1]] = 'FICTIF' . $interputeurFictifNumber;
-                                $fileLineExploded[2] = 'FICTIF' . $interputeurFictifNumber;
+                                $posteSecours = $departureMeta['postName'];
+                                $departSecours = $departureMeta['departureName'];
+                                $gdoSecours = $departureMeta['departureGdoCode'];
                             } else {
-                                $fileLineExploded[2] = $interputeurFictifArray[$fileLineExploded[1]];
-                            }
-                            if ($fileLineExploded[17] != 'NULL') {
-                                $posteSecours = "";
-                                $departSecours = "";
-                                $gdoSecours = "";
-                                if ($fileLineExploded[19] == $departureMeta['departureSitrCode']) {
-
-                                    $posteSecours = $departureMeta['postName'];
-                                    $departSecours = $departureMeta['departureName'];
-                                    $gdoSecours = $departureMeta['departureGdoCode'];
-                                } else {
-                                    //chercher dans le fichier 
-                                }
+                                //chercher dans le fichier 
                             }
                         }
-                    } elseif ($fileLineExploded[0] == "NOEUD_E" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
-
-                        $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'noeud', null, null, null, null, $fileLineExploded[2], $departureMeta['departureSitrCode'], null, null, null, 0, 0, 0, null);
-                        $componentNumber++;
-                    } elseif ($fileLineExploded[0] == "NOEUD_Y" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
-
-                        $this->insertComponent(1, $componentNumber, $fileLineExploded[1], $fileLineExploded[10], $fileLineExploded[11], 'autotransfo', null, null, null, null, $fileLineExploded[2], $departureMeta['departureSitrCode'], null, null, null, 0, 0, 0, null);
-                        $componentNumber++;
-                    } elseif ($fileLineExploded[0] == "TRONCON") {
-
-                        $this->insertComponent(1, $componentNumber, null, $fileLineExploded[1], $fileLineExploded[2], 'troncon', null, null, null, null, null, $departureMeta['departureSitrCode'], null, null, null, 0, 0, 0, $fileLineExploded[3]);
-                        $componentNumber++;
-                    } elseif ($fileLineExploded[0] == "NOEUD_P" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
-
-                        $postesBT[] = $fileLineExploded[1];
-                        $typePoste = $this->getPosteType($fileLineExploded[8], $fileLineExploded[9]);
-                        $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'poste', null, $typePoste, $fileLineExploded[7], null, $fileLineExploded[2], $departureMeta['departureSitrCode'], null, null, null, $fileLineExploded[10], 0, $fileLineExploded[13], null);
+                        $this->insertComponent(1, $componentNumber, null, $positionInterPoste['amont'], $positionInterPoste['aval'], 'inter', (($fileLineExploded[10] == 'NO_TC') ? 'inter' : 'omt'), null, $fileLineExploded[9], $state, $fileLineExploded[4], $departureMeta['departureGdoCode'], (($posteSecours) ?  $posteSecours  : null), (($departSecours) ?  $departSecours  : null), (($gdoSecours) ?  $gdoSecours  : null), 0, 0, 0, null);
                         $componentNumber++;
                     }
+                    else{
+                        $wait = false;
+                    }
+                } elseif ($fileLineExploded[0] == "NOEUD_J" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
+                    
+                    if (!$fileLineExploded[2]) {
+                        
+                        if (!array_key_exists($fileLineExploded[1], $interputeurFictifArray)) {
+
+                            $interputeurFictifNumber++;
+                            $interputeurFictifArray[$fileLineExploded[1]] = 'FICTIF' . $interputeurFictifNumber;
+                            $fileLineExploded[2] = 'FICTIF' . $interputeurFictifNumber;
+                        } else {
+                            $fileLineExploded[2] = $interputeurFictifArray[$fileLineExploded[1]];
+                        }
+                    }
+                        if ($fileLineExploded[17] != 'NULL') {
+                            
+                            $posteSecours = "";
+                            $departSecours = "";
+                            $gdoSecours = "";
+                            if ($fileLineExploded[19] == $departureMeta['departureSitrCode']) {
+
+                                $posteSecours = $departureMeta['postName'];
+                                $departSecours = $departureMeta['departureName'];
+                                $gdoSecours = $departureMeta['departureGdoCode'];
+                            } else {
+                                //chercher dans le fichier 
+                            }
+                        }
+                            $state = ($fileLineExploded[16] == 0) ? 'F' : 'O';
+                            if(!array_key_exists($fileLineExploded[2],$noeudjCodeGdoArray)){
+                                
+                                $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'iat', (($fileLineExploded[8] == 'NO_TC') ? 'iat' : 'omt'), null, $fileLineExploded[7], $state, $fileLineExploded[2], $departureMeta['departureGdoCode'], (($posteSecours) ?  $posteSecours  : null), (($departSecours) ?  $departSecours  : null), (($gdoSecours) ?  $gdoSecours  : null), 0, 0, 0, null);
+                                if ($state == 'O'){
+                                    $noeudjCodeGdoArray[$fileLineExploded[2]] = 1;
+                                } 
+                            }
+                            $componentNumber++;
+                        
+                    
+                } elseif ($fileLineExploded[0] == "NOEUD_E" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
+
+                    $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'noeud', null, null, null, null, $fileLineExploded[2], $departureMeta['departureGdoCode'], null, null, null, 0, 0, 0, null);
+                    $componentNumber++;
+                } elseif ($fileLineExploded[0] == "NOEUD_Y" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
+
+                    $this->insertComponent(1, $componentNumber, $fileLineExploded[1], $fileLineExploded[10], $fileLineExploded[11], 'autotransfo', null, null, null, null, $fileLineExploded[2], $departureMeta['departureGdoCode'], null, null, null, 0, 0, 0, null);
+                    $componentNumber++;
+                } elseif ($fileLineExploded[0] == "TRONCON") {
+
+                    $this->insertComponent(1, $componentNumber, null, $fileLineExploded[1], $fileLineExploded[2], 'troncon', null, null, null, null, null, $departureMeta['departureGdoCode'], null, null, null, 0, 0, 0, $fileLineExploded[3]);
+                    $componentNumber++;
+                } elseif ($fileLineExploded[0] == "NOEUD_P" && ($fileLineExploded[3] = !0 || $fileLineExploded[4] != 0)) {
+
+                    $postesBT[] = $fileLineExploded[1];
+                    $typePoste = $this->getPosteType($fileLineExploded[8], $fileLineExploded[9]);
+                    $this->insertComponent(1, $componentNumber, $fileLineExploded[1], null, null, 'poste', null, $typePoste, $fileLineExploded[7], null, $fileLineExploded[2], $departureMeta['departureGdoCode'], null, null, null, $fileLineExploded[10], 0, $fileLineExploded[13], null);
+                    $componentNumber++;
                 }
             }
         }
