@@ -292,4 +292,8 @@ class Schema
             }
         }
     }
+
+    public function organizeTmpSChemaData(){
+
+    }
 }
